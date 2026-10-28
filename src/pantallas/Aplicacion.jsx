@@ -1,57 +1,82 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { useSesion } from '../auth/SesionProvider'
 import { periodoActual } from '../lib/formato'
-import Barra from '../componentes/Barra'
+import Navegacion from '../componentes/Navegacion'
+import FormularioTransaccion from '../componentes/FormularioTransaccion'
 import Resumen from './Resumen'
 import Transacciones from './Transacciones'
+import Presupuesto from './Presupuesto'
+import Perfil from './Perfil'
 
 /*
- * Carcasa de la aplicación. Mantiene el mes consultado y el juego de
- * categorías, para que resumen e historial trabajen sobre lo mismo.
+ * Carcasa de la aplicación. Mantiene el mes consultado, el juego de categorías
+ * y el formulario de nueva transacción, que es accesible desde cualquier
+ * pantalla igual que en la referencia de diseño.
  */
 
 export default function Aplicacion() {
-  const { usuario } = useSesion()
-  const [pestana, setPestana] = useState('resumen')
+  const [seccion, setSeccion] = useState('resumen')
   const [periodo, setPeriodo] = useState(periodoActual)
   const [categorias, setCategorias] = useState([])
+  const [creando, setCreando] = useState(false)
+  const [recarga, setRecarga] = useState(0)
 
   const cargarCategorias = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('categorias')
       .select('id, nombre, tipo')
       .order('tipo')
       .order('nombre')
+    if (error) console.error('[categorias]', error)
     setCategorias(data ?? [])
   }, [])
 
   useEffect(() => { cargarCategorias() }, [cargarCategorias])
 
+  function trasGuardar() {
+    setCreando(false)
+    cargarCategorias()
+    setRecarga((n) => n + 1)
+  }
+
+  const comunes = { periodo, onCambiarPeriodo: setPeriodo, recarga }
+
   return (
-    <div className="app">
-      <Barra activa={pestana} onCambiar={setPestana} />
+    <div className="marco">
+      <Navegacion activa={seccion} onCambiar={setSeccion} />
 
-      <main className="contenido">
-        <p className="identidad">Sesión activa como <strong>{usuario?.email}</strong></p>
-
-        {pestana === 'resumen' && (
+      <main className="lienzo">
+        {seccion === 'resumen' && (
           <Resumen
-            periodo={periodo}
-            onCambiarPeriodo={setPeriodo}
-            onIrATransacciones={() => setPestana('transacciones')}
+            {...comunes}
+            onNuevaTransaccion={() => setCreando(true)}
+            onIrA={setSeccion}
           />
         )}
 
-        {pestana === 'transacciones' && (
+        {seccion === 'transacciones' && (
           <Transacciones
-            periodo={periodo}
-            onCambiarPeriodo={setPeriodo}
+            {...comunes}
             categorias={categorias}
+            onNuevaTransaccion={() => setCreando(true)}
             onCategoriasCambiadas={cargarCategorias}
           />
         )}
+
+        {seccion === 'presupuesto' && (
+          <Presupuesto {...comunes} categorias={categorias} />
+        )}
+
+        {seccion === 'perfil' && <Perfil categorias={categorias} />}
       </main>
+
+      {creando && (
+        <FormularioTransaccion
+          categorias={categorias}
+          onCerrar={() => setCreando(false)}
+          onGuardado={trasGuardar}
+        />
+      )}
     </div>
   )
 }

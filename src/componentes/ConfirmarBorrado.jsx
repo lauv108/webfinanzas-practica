@@ -17,7 +17,8 @@ export default function ConfirmarBorrado({ transaccion, onCerrar, onEliminado })
     setBorrando(false)
 
     if (error) {
-      setError('No se pudo eliminar: ' + error.message)
+      console.error('[transacciones]', error)
+      setError('No se pudo eliminar la transacción. Intenta de nuevo.')
       return
     }
     onEliminado()

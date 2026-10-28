@@ -1,0 +1,17 @@
+# Encabezados de seguridad para el despliegue (formato Netlify).
+#
+# NO TIENEN EFECTO EN DESARROLLO: el servidor de Vite no los aplica. Entran en
+# vigor cuando el sitio se publica, y solo entonces pueden verificarse con las
+# herramientas del navegador o con un analizador de encabezados.
+#
+# 'unsafe-inline' en style-src es necesario porque la aplicacion usa estilos en
+# linea para las barras de progreso del presupuesto. No se admite en script-src.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin

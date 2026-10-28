@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { pesos, fechaCorta, rangoDelPeriodo } from '../lib/formato'
+import { pesos, fechaCorta, rangoDelPeriodo, nombrePeriodo } from '../lib/formato'
+import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import SelectorMes from '../componentes/SelectorMes'
 import FormularioTransaccion from '../componentes/FormularioTransaccion'
 import ConfirmarBorrado from '../componentes/ConfirmarBorrado'
 
 /*
- * Historial del mes seleccionado.
+ * Historial del mes.
  * RF-13 listado cronológico descendente, RF-14 filtros.
  * Los filtros se aplican sobre las filas del mes ya cargadas: el volumen de un
  * mes es pequeño y así la respuesta es inmediata, sin una consulta por tecla.
  */
 
-const FILTROS_VACIOS = { texto: '', categoriaId: '', desde: '', hasta: '' }
+const FILTROS_VACIOS = { texto: '', tipo: 'todos', categoriaId: '' }
 
-export default function Transacciones({ periodo, onCambiarPeriodo, categorias, onCategoriasCambiadas }) {
+export default function Transacciones({
+  periodo, onCambiarPeriodo, recarga, categorias, onNuevaTransaccion, onCategoriasCambiadas,
+}) {
   const [filas, setFilas] = useState([])
   const [estado, setEstado] = useState('cargando')
   const [error, setError] = useState(null)
@@ -34,7 +37,8 @@ export default function Transacciones({ periodo, onCambiarPeriodo, categorias, o
       .order('creado_en', { ascending: false })
 
     if (error) {
-      setError(error.message)
+      console.error('[transacciones]', error)
+      setError('No se pudo cargar el historial. Recarga la página.')
       setEstado('error')
     } else {
       setFilas(data)
@@ -42,23 +46,30 @@ export default function Transacciones({ periodo, onCambiarPeriodo, categorias, o
     }
   }, [periodo])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => { cargar() }, [cargar, recarga])
   useEffect(() => { setFiltros(FILTROS_VACIOS) }, [periodo])
 
   const visibles = useMemo(() => {
     const texto = filtros.texto.trim().toLowerCase()
     return filas.filter((f) => {
       if (texto && !f.descripcion.toLowerCase().includes(texto)) return false
+      if (filtros.tipo !== 'todos' && f.tipo !== filtros.tipo) return false
       if (filtros.categoriaId && f.categoria_id !== filtros.categoriaId) return false
-      if (filtros.desde && f.fecha < filtros.desde) return false
-      if (filtros.hasta && f.fecha > filtros.hasta) return false
       return true
     })
   }, [filas, filtros])
 
-  const hayFiltro = filtros.texto || filtros.categoriaId || filtros.desde || filtros.hasta
+  const entradas = visibles.filter((f) => f.tipo === 'ingreso').reduce((s, f) => s + Number(f.monto), 0)
+  const salidas = visibles.filter((f) => f.tipo === 'gasto').reduce((s, f) => s + Number(f.monto), 0)
 
-  function cerrarModal() { setModal(null) }
+  // Solo las categorías que aparecen en el mes: una lista de chips con
+  // categorías vacías no ayuda a filtrar
+  const usadas = useMemo(() => {
+    const ids = new Set(filas.map((f) => f.categoria_id))
+    return categorias.filter((c) => ids.has(c.id))
+  }, [filas, categorias])
+
+  const hayFiltro = filtros.texto || filtros.tipo !== 'todos' || filtros.categoriaId
 
   async function trasGuardar() {
     setModal(null)
@@ -68,57 +79,65 @@ export default function Transacciones({ periodo, onCambiarPeriodo, categorias, o
 
   return (
     <>
-      <div className="encabezado-mes">
-        <SelectorMes periodo={periodo} onCambiar={onCambiarPeriodo} />
-        <button className="boton fantasma auto" onClick={() => setModal({ clase: 'nueva' })}>
-          + Nueva transacción
-        </button>
-      </div>
+      <EncabezadoPagina
+        rotulo={`Movimientos — ${nombrePeriodo(periodo)}`}
+        titulo="Movimientos"
+        resumen={
+          estado === 'listo'
+            ? `${visibles.length} de ${filas.length} · ${pesos(entradas)} entraron · ${pesos(salidas)} salieron`
+            : null
+        }
+        acciones={
+          <>
+            <SelectorMes periodo={periodo} onCambiar={onCambiarPeriodo} />
+            <button className="boton auto" onClick={onNuevaTransaccion}>+ Nueva transacción</button>
+          </>
+        }
+      />
 
       <section className="tarjeta ancha">
-        <div className="filtros">
-          <div className="campo">
-            <label htmlFor="f-texto">Buscar en descripción</label>
+        <div className="barra-filtros">
+          <div className="buscador">
+            <label className="oculto" htmlFor="f-texto">Buscar en la descripción</label>
             <input
-              id="f-texto" value={filtros.texto}
+              id="f-texto" type="search" placeholder="Buscar en la descripción"
+              value={filtros.texto}
               onChange={(e) => setFiltros({ ...filtros, texto: e.target.value })}
             />
           </div>
-          <div className="campo">
-            <label htmlFor="f-categoria">Categoría</label>
-            <select
-              id="f-categoria" value={filtros.categoriaId}
-              onChange={(e) => setFiltros({ ...filtros, categoriaId: e.target.value })}
-            >
-              <option value="">Todas</option>
-              {categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            </select>
-          </div>
-          <div className="campo">
-            <label htmlFor="f-desde">Desde</label>
-            <input
-              id="f-desde" type="date" value={filtros.desde}
-              onChange={(e) => setFiltros({ ...filtros, desde: e.target.value })}
-            />
-          </div>
-          <div className="campo">
-            <label htmlFor="f-hasta">Hasta</label>
-            <input
-              id="f-hasta" type="date" value={filtros.hasta}
-              onChange={(e) => setFiltros({ ...filtros, hasta: e.target.value })}
-            />
+
+          <div className="segmentado" role="group" aria-label="Tipo de movimiento">
+            {[['todos', 'Todos'], ['ingreso', 'Ingresos'], ['gasto', 'Gastos']].map(([valor, texto]) => (
+              <button
+                key={valor}
+                className="segmento"
+                aria-pressed={filtros.tipo === valor}
+                onClick={() => setFiltros({ ...filtros, tipo: valor })}
+              >
+                {texto}
+              </button>
+            ))}
           </div>
         </div>
 
-        {hayFiltro && (
-          <p className="pista">
-            {visibles.length} de {filas.length} movimientos.{' '}
-            <button className="enlace" onClick={() => setFiltros(FILTROS_VACIOS)}>Quitar filtros</button>
-          </p>
+        {usadas.length > 0 && (
+          <div className="fichas" role="group" aria-label="Filtrar por categoría">
+            <button
+              className="ficha" aria-pressed={filtros.categoriaId === ''}
+              onClick={() => setFiltros({ ...filtros, categoriaId: '' })}
+            >Todas</button>
+            {usadas.map((c) => (
+              <button
+                key={c.id} className="ficha"
+                aria-pressed={filtros.categoriaId === c.id}
+                onClick={() => setFiltros({ ...filtros, categoriaId: c.id })}
+              >{c.nombre}</button>
+            ))}
+          </div>
         )}
 
         {estado === 'cargando' && <p className="pista">Cargando movimientos...</p>}
-        {estado === 'error' && <p className="error bloque">No se pudo cargar el historial: {error}</p>}
+        {estado === 'error' && <p className="error bloque">{error}</p>}
 
         {estado === 'listo' && visibles.length === 0 && (
           <div className="vacio">
@@ -126,60 +145,58 @@ export default function Transacciones({ periodo, onCambiarPeriodo, categorias, o
               <>
                 <p className="fuerte">Todavía no hay movimientos en este mes.</p>
                 <p>Registra el primero y el resumen se arma solo.</p>
-                <button className="boton auto" onClick={() => setModal({ clase: 'nueva' })}>
+                <button className="boton auto" onClick={onNuevaTransaccion}>
                   Registrar mi primer movimiento
                 </button>
               </>
             ) : (
-              <p>Ningún movimiento coincide con los filtros.</p>
+              <>
+                <p>Ningún movimiento coincide con los filtros.</p>
+                <button className="boton auto fantasma" onClick={() => setFiltros(FILTROS_VACIOS)}>
+                  Quitar filtros
+                </button>
+              </>
             )}
           </div>
         )}
 
         {estado === 'listo' && visibles.length > 0 && (
-          <div className="tabla-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th><th>Descripción</th><th>Categoría</th>
-                  <th className="der">Monto</th><th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibles.map((f) => (
-                  <tr key={f.id}>
-                    <td className="nowrap">{fechaCorta(f.fecha)}</td>
-                    <td>{f.descripcion}</td>
-                    <td><span className="etiqueta">{f.categorias?.nombre}</span></td>
-                    <td className={f.tipo === 'ingreso' ? 'der cifra entra' : 'der cifra'}>
-                      {f.tipo === 'ingreso' ? '+' : '-'}{pesos(f.monto)}
-                    </td>
-                    <td className="der nowrap">
-                      <button className="mini" onClick={() => setModal({ clase: 'editar', fila: f })}>editar</button>
-                      <button className="mini borrar" onClick={() => setModal({ clase: 'borrar', fila: f })}>borrar</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ul className="lista-detallada">
+            {visibles.map((f) => (
+              <li key={f.id}>
+                <span className="mov-texto">
+                  <span className="mov-titulo">{f.descripcion}</span>
+                  <span className="mov-meta">{f.categorias?.nombre} · {fechaCorta(f.fecha)}</span>
+                </span>
+                <span className={f.tipo === 'ingreso' ? 'cifra entra' : 'cifra'}>
+                  {f.tipo === 'ingreso' ? '+' : '-'}{pesos(f.monto)}
+                </span>
+                <span className="mov-acciones">
+                  <button className="mini" onClick={() => setModal({ clase: 'editar', fila: f })}>editar</button>
+                  <button className="mini borrar" onClick={() => setModal({ clase: 'borrar', fila: f })}>borrar</button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {hayFiltro && estado === 'listo' && filas.length > 0 && (
+          <p className="pista">
+            Mostrando {visibles.length} de {filas.length} movimientos del mes.{' '}
+            <button className="enlace" onClick={() => setFiltros(FILTROS_VACIOS)}>Quitar filtros</button>
+          </p>
         )}
       </section>
 
-      {modal?.clase === 'nueva' && (
-        <FormularioTransaccion
-          categorias={categorias} onCerrar={cerrarModal} onGuardado={trasGuardar}
-        />
-      )}
       {modal?.clase === 'editar' && (
         <FormularioTransaccion
           transaccion={modal.fila} categorias={categorias}
-          onCerrar={cerrarModal} onGuardado={trasGuardar}
+          onCerrar={() => setModal(null)} onGuardado={trasGuardar}
         />
       )}
       {modal?.clase === 'borrar' && (
         <ConfirmarBorrado
-          transaccion={modal.fila} onCerrar={cerrarModal}
+          transaccion={modal.fila} onCerrar={() => setModal(null)}
           onEliminado={() => { setModal(null); cargar() }}
         />
       )}

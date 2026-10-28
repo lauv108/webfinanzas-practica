@@ -61,3 +61,12 @@ export function hoyISO() {
   const hoy = new Date()
   return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
 }
+
+const HOY_LARGO = new Intl.DateTimeFormat('es-CO', {
+  weekday: 'long', day: 'numeric', month: 'long',
+})
+
+/* "miércoles, 28 de octubre", para el encabezado de la pantalla */
+export function hoyLargo() {
+  return HOY_LARGO.format(new Date())
+}

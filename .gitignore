@@ -137,3 +137,6 @@ dist
 
 # Documentos entregados en el chat, no hacen parte del codigo
 Claude outputs/
+
+# Archivos retirados del codigo pero conservados
+_archivo/

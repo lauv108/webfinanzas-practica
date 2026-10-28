@@ -107,9 +107,12 @@ export default function FormularioTransaccion({ transaccion, categorias, onCerra
           .single()
 
         if (error) {
-          setErrores({ general: error.message.includes('duplicate')
-            ? 'Ya tienes una categoría con ese nombre.'
-            : 'No se pudo crear la categoría.' })
+          console.error('[categorias]', error)
+          setErrores({
+            general: error.code === '23505'
+              ? 'Ya tienes una categoría con ese nombre.'
+              : 'No se pudo crear la categoría. Intenta de nuevo.',
+          })
           return
         }
         categoriaId = data.id
@@ -129,7 +132,8 @@ export default function FormularioTransaccion({ transaccion, categorias, onCerra
         : await supabase.from('transacciones').insert(fila)
 
       if (error) {
-        setErrores({ general: 'No se pudo guardar: ' + error.message })
+        console.error('[transacciones]', error)
+        setErrores({ general: 'No se pudo guardar el movimiento. Revisa los datos e intenta de nuevo.' })
         return
       }
 
