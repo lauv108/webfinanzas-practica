@@ -14,10 +14,10 @@ Estas dos acciones viven en el panel de Supabase y condicionan la publicación.
    encenderlos rompe el cambio de contraseña. *Prevent use of leaked passwords*
    solo existe en el plan Pro; en el plan gratuito queda como riesgo aceptado,
    mitigado por longitud mínima y complejidad.
-3. **SQL Editor**: ejecutar `webfinanzas_eliminacion-cuenta_v1.sql` (habilita
-   la eliminación de cuenta desde Perfil) y después
-   `webfinanzas_verificacion-seguridad_v1.sql` (comprueba el estado de las
-   políticas de acceso). Guardar la salida como evidencia.
+3. **SQL Editor**: ejecutar `sql/1_eliminacion-cuenta.sql` (habilita la
+   eliminación de cuenta desde Perfil) y después `sql/2_verificacion-seguridad.sql`,
+   que devuelve una sola tabla de diez comprobaciones con PASA o REVISAR. Guardar
+   una captura de esa tabla como evidencia.
 
 ## Publicar en Vercel
 

@@ -79,11 +79,11 @@ npm run lint    # análisis estático
 El esquema completo, las vistas de cálculo y las políticas de acceso se entregan
 como scripts SQL y se ejecutan desde el editor SQL de Supabase. Son idempotentes.
 
-| Script | Qué hace |
+| Script (carpeta `sql/`) | Qué hace |
 |---|---|
 | `webfinanzas_base-de-datos_v1.sql` | Tipos, tablas, índices, vistas, disparadores y políticas |
-| `webfinanzas_eliminacion-cuenta_v1.sql` | Función para que el usuario elimine su propia cuenta y sus datos |
-| `webfinanzas_verificacion-seguridad_v1.sql` | Comprueba el estado real de las políticas de acceso |
+| `1_eliminacion-cuenta.sql` | Función para que el usuario elimine su propia cuenta y sus datos |
+| `2_verificacion-seguridad.sql` | Diez comprobaciones de seguridad en una sola tabla, con PASA o REVISAR |
 | `webfinanzas_datos-demo_v1.sql` | Carga movimientos de ejemplo en una cuenta de prueba |
 
 Al crear una cuenta, un disparador siembra ocho categorías iniciales, de modo que
