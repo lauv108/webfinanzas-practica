@@ -45,9 +45,14 @@ export default function Acceso() {
     const errorCorreo = validarCorreo(correo)
     if (errorCorreo) nuevos.correo = errorCorreo
 
-    if (modo !== 'recuperar') {
+    // La política de complejidad aplica al crear la contraseña, no al entrar:
+    // una contraseña antigua válida no debe quedar bloqueada en el cliente
+    if (modo === 'registro') {
       const errorClave = validarClave(clave)
       if (errorClave) nuevos.clave = errorClave
+    }
+    if (modo === 'login' && !clave) {
+      nuevos.clave = 'Escribe tu contraseña.'
     }
     if (modo === 'registro' && clave !== confirmacion) {
       nuevos.confirmacion = 'Las contraseñas no coinciden.'
@@ -120,7 +125,7 @@ export default function Acceso() {
               value={clave}
               onChange={(e) => setClave(e.target.value)}
             />
-            {modo === 'registro' && !errores.clave && <p className="pista">Mínimo 8 caracteres.</p>}
+            {modo === 'registro' && !errores.clave && <p className="pista">Mínimo 8 caracteres, con letras y números.</p>}
             {errores.clave && <p className="error">{errores.clave}</p>}
           </div>
         )}

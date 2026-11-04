@@ -18,6 +18,9 @@ export function traducirError(error) {
   if (texto.includes('password should be at least')) {
     return 'La contraseña debe tener al menos 8 caracteres.'
   }
+  if (texto.includes('password should contain') || texto.includes('weak password') || texto.includes('weak_password')) {
+    return 'La contraseña debe tener letras y números.'
+  }
   if (texto.includes('unable to validate email') || texto.includes('invalid email')) {
     return 'El correo no tiene un formato válido.'
   }
@@ -45,5 +48,9 @@ export function validarCorreo(correo) {
 export function validarClave(clave) {
   if (!clave) return 'Escribe una contraseña.'
   if (clave.length < 8) return 'La contraseña debe tener al menos 8 caracteres.'
+  // Igual que la política del servidor: al menos una letra y un dígito
+  if (!/[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(clave) || !/[0-9]/.test(clave)) {
+    return 'La contraseña debe tener letras y números.'
+  }
   return null
 }

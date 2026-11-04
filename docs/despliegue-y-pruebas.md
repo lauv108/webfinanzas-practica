@@ -7,8 +7,13 @@ Estas dos acciones viven en el panel de Supabase y condicionan la publicación.
 1. **Authentication → Sign In / Providers → Email**: activar **Confirm email**.
    Desde el 21 de octubre está apagado para desarrollar; apagado permite crear
    cuentas con correos que no existen.
-2. **Authentication → Attack Protection**: activar **Leaked password protection**
-   y fijar **Minimum password length** en 8.
+2. **Authentication → Sign In / Providers → Email**: **Minimum password length**
+   en 8 y **Password requirements** en letras y dígitos. Dejar apagados *Secure
+   password change* y *Require current password when updating*: la pantalla de
+   Perfil no pide la contraseña actual y la sesión dura más de 24 horas, así que
+   encenderlos rompe el cambio de contraseña. *Prevent use of leaked passwords*
+   solo existe en el plan Pro; en el plan gratuito queda como riesgo aceptado,
+   mitigado por longitud mínima y complejidad.
 3. **SQL Editor**: ejecutar `webfinanzas_eliminacion-cuenta_v1.sql` (habilita
    la eliminación de cuenta desde Perfil) y después
    `webfinanzas_verificacion-seguridad_v1.sql` (comprueba el estado de las

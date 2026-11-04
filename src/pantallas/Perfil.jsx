@@ -131,7 +131,7 @@ export default function Perfil({ categorias, onIrAPrivacidad }) {
               <label htmlFor="nueva">Contraseña nueva</label>
               <input id="nueva" type="password" autoComplete="new-password"
                 value={clave} onChange={(e) => setClave(e.target.value)} />
-              {!errores.clave && <p className="pista">Mínimo 8 caracteres.</p>}
+              {!errores.clave && <p className="pista">Mínimo 8 caracteres, con letras y números.</p>}
               {errores.clave && <p className="error">{errores.clave}</p>}
             </div>
             <div className="campo">
