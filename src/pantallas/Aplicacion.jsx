@@ -7,6 +7,7 @@ import Resumen from './Resumen'
 import Transacciones from './Transacciones'
 import Presupuesto from './Presupuesto'
 import Perfil from './Perfil'
+import Privacidad from './Privacidad'
 
 /*
  * Carcasa de la aplicación. Mantiene el mes consultado, el juego de categorías
@@ -43,7 +44,7 @@ export default function Aplicacion() {
 
   return (
     <div className="marco">
-      <Navegacion activa={seccion} onCambiar={setSeccion} />
+      <Navegacion activa={seccion === 'privacidad' ? 'perfil' : seccion} onCambiar={setSeccion} />
 
       <main className="lienzo">
         {seccion === 'resumen' && (
@@ -67,7 +68,11 @@ export default function Aplicacion() {
           <Presupuesto {...comunes} categorias={categorias} />
         )}
 
-        {seccion === 'perfil' && <Perfil categorias={categorias} />}
+        {seccion === 'perfil' && (
+          <Perfil categorias={categorias} onIrAPrivacidad={() => setSeccion('privacidad')} />
+        )}
+
+        {seccion === 'privacidad' && <Privacidad onVolver={() => setSeccion('perfil')} />}
       </main>
 
       {creando && (

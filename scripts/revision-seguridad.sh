@@ -63,10 +63,19 @@ fi
 # ---------------------------------------------------------------------------
 titulo 'A03 Software Supply Chain Failures'
 
-if npm audit --audit-level=low >/dev/null 2>&1; then
-  pasa 'La auditoria de dependencias no reporta vulnerabilidades'
+# Lo que se publica es lo que importa: las dependencias de produccion deben
+# estar limpias. Las de desarrollo (linter, empaquetador) no van en el sitio;
+# un hallazgo ahi se informa, no bloquea.
+if npm audit --omit=dev --audit-level=low >/dev/null 2>&1; then
+  pasa 'Dependencias de produccion sin vulnerabilidades conocidas'
 else
-  falla 'La auditoria de dependencias reporta hallazgos; revisar npm audit'
+  falla 'Dependencias de produccion con hallazgos; revisar npm audit --omit=dev'
+fi
+
+if npm audit --audit-level=low >/dev/null 2>&1; then
+  pasa 'Dependencias de desarrollo sin vulnerabilidades conocidas'
+else
+  printf '  AVISO   %s\n' 'Hallazgos solo en dependencias de desarrollo; revisar npm audit (no bloquea)'
 fi
 
 if [ -f package-lock.json ]; then

@@ -694,8 +694,9 @@ tbody tr:last-child td { border-bottom: 0; }
 
 .par { display: flex; gap: 10px; }
 .par > * { flex: 1; min-width: 0; }
-.par-fin { margin-top: 20px; justify-content: flex-start; }
-.par-fin > * { flex: 0 0 auto; }
+.par-fin { margin-top: 20px; justify-content: flex-start; flex-wrap: wrap; align-items: center; }
+.par-fin > * { flex: 0 1 auto; min-width: 0; }
+.par-fin .enlace { white-space: normal; text-align: left; }
 
 .mini {
   background: none; border: 0;
@@ -822,3 +823,50 @@ tbody tr:last-child td { border-bottom: 0; }
   color: var(--tinta-suave);
   font-family: var(--mono); font-size: 0.82rem;
 }
+
+
+/* ====================================================== politica de datos */
+
+.politica section { margin-bottom: 18px; }
+.politica section:last-child { margin-bottom: 0; }
+
+.politica h3 {
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.politica p { margin: 0 0 8px; font-size: 0.88rem; max-width: 72ch; }
+
+.politica-fecha {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tinta-tenue);
+  margin: 0 0 16px;
+}
+
+.modal.amplio { max-width: 680px; max-height: calc(100vh - 40px); overflow-y: auto; }
+
+.campo.casilla label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.campo.casilla input[type="checkbox"] {
+  width: 16px; height: 16px; margin-top: 2px;
+  flex: none; accent-color: var(--acento);
+}
+
+.campo.casilla .enlace { font-size: inherit; }
+
+.tarjeta.peligrosa { border-top: 3px solid var(--sale); }

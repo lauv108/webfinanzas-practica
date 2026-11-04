@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSesion } from '../auth/SesionProvider'
 import { traducirError, validarCorreo, validarClave } from '../auth/mensajes'
+import PoliticaDatos from '../componentes/PoliticaDatos'
 
 /*
  * Pantallas de acceso: registro (RF-01), inicio de sesión (RF-02)
@@ -24,6 +25,8 @@ export default function Acceso() {
   const [errores, setErrores] = useState({})
   const [aviso, setAviso] = useState(null)
   const [enviando, setEnviando] = useState(false)
+  const [autoriza, setAutoriza] = useState(false)
+  const [verPolitica, setVerPolitica] = useState(false)
 
   function cambiarModo(nuevo) {
     setModo(nuevo)
@@ -48,6 +51,10 @@ export default function Acceso() {
     }
     if (modo === 'registro' && clave !== confirmacion) {
       nuevos.confirmacion = 'Las contraseñas no coinciden.'
+    }
+    // RNF-12. Autorización previa, expresa e informada
+    if (modo === 'registro' && !autoriza) {
+      nuevos.autoriza = 'Para crear la cuenta debes aceptar la política de tratamiento de datos.'
     }
 
     setErrores(nuevos)
@@ -132,6 +139,19 @@ export default function Acceso() {
           </div>
         )}
 
+        {modo === 'registro' && (
+          <div className="campo casilla">
+            <label htmlFor="autoriza">
+              <input id="autoriza" type="checkbox" checked={autoriza} onChange={(e) => setAutoriza(e.target.checked)} />
+              <span>
+                Autorizo el tratamiento de mis datos según la{' '}
+                <button type="button" className="enlace" onClick={() => setVerPolitica(true)}>política de tratamiento de datos</button>.
+              </span>
+            </label>
+            {errores.autoriza && <p className="error">{errores.autoriza}</p>}
+          </div>
+        )}
+
         {errores.general && <p className="error bloque">{errores.general}</p>}
         {aviso && <p className="aviso">{aviso}</p>}
 
@@ -154,6 +174,18 @@ export default function Acceso() {
           )}
         </div>
       </form>
+
+      {verPolitica && (
+        <div className="velo" role="dialog" aria-modal="true" aria-label="Política de tratamiento de datos">
+          <div className="modal amplio">
+            <h2>Tratamiento de datos personales</h2>
+            <PoliticaDatos />
+            <div className="par" style={{ marginTop: 16 }}>
+              <button className="boton" onClick={() => setVerPolitica(false)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

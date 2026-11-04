@@ -41,7 +41,10 @@ sectores.
 - **Presupuesto** — topes mensuales por categoría con barra de consumo y
   semáforo: verde por debajo del 90 % del tope, amarillo entre 90 y 99, rojo al
   alcanzarlo.
-- **Perfil** — datos de la cuenta, cambio de contraseña y cierre de sesión.
+- **Perfil** — datos de la cuenta, cambio de contraseña, exportación de todos
+  los datos en JSON, eliminación de la cuenta y cierre de sesión.
+- **Privacidad** — política de tratamiento de datos personales (Ley 1581 de
+  2012), visible también antes de registrarse. El registro exige aceptarla.
 
 La navegación es un riel vertical de iconos en escritorio y una barra inferior
 por debajo de 768 px. La interfaz es operable desde 360 px de ancho.
@@ -79,6 +82,7 @@ como scripts SQL y se ejecutan desde el editor SQL de Supabase. Son idempotentes
 | Script | Qué hace |
 |---|---|
 | `webfinanzas_base-de-datos_v1.sql` | Tipos, tablas, índices, vistas, disparadores y políticas |
+| `webfinanzas_eliminacion-cuenta_v1.sql` | Función para que el usuario elimine su propia cuenta y sus datos |
 | `webfinanzas_verificacion-seguridad_v1.sql` | Comprueba el estado real de las políticas de acceso |
 | `webfinanzas_datos-demo_v1.sql` | Carga movimientos de ejemplo en una cuenta de prueba |
 
@@ -105,6 +109,13 @@ junto con el script SQL de verificación.
 (política de seguridad de contenido, HSTS, `nosniff`, `frame-ancestors`). Entran
 en vigor al publicar.
 
+## Despliegue
+
+Pasos, variables de entorno y lista de pruebas de aceptación en
+[`docs/despliegue-y-pruebas.md`](docs/despliegue-y-pruebas.md). Las variables
+de entorno deben existir en el hosting **antes** del primer despliegue: sin
+ellas el sitio compila pero queda en blanco.
+
 ## Fuera del alcance de la versión 1.0
 
 Exportación a CSV, sincronización bancaria, notificaciones automáticas, metas de
@@ -113,6 +124,7 @@ cuentas compartidas.
 
 ## Estado
 
-Los veintidós requerimientos funcionales del alcance están implementados. Quedan
-pendientes la verificación de la recuperación de contraseña de punta a punta, el
-endurecimiento de la configuración de autenticación y la publicación del sitio.
+Los veintidós requerimientos funcionales y los de tratamiento de datos (RNF-12
+y RNF-13) están implementados. Quedan pendientes la configuración de seguridad
+de la autenticación en el panel, la publicación del sitio y las pruebas de
+aceptación sobre la URL publicada.
