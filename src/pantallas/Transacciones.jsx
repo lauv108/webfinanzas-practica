@@ -5,10 +5,11 @@ import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import SelectorMes from '../componentes/SelectorMes'
 import FormularioTransaccion from '../componentes/FormularioTransaccion'
 import ConfirmarBorrado from '../componentes/ConfirmarBorrado'
+import { transaccionesACSV, descargarCSV } from '../lib/exportar'
 
 /*
  * Historial del mes.
- * RF-13 listado cronológico descendente, RF-14 filtros.
+ * RF-13 listado cronológico descendente, RF-14 filtros, RF-23 exportación a CSV.
  * Los filtros se aplican sobre las filas del mes ya cargadas: el volumen de un
  * mes es pequeño y así la respuesta es inmediata, sin una consulta por tecla.
  */
@@ -69,6 +70,12 @@ export default function Transacciones({
     return categorias.filter((c) => ids.has(c.id))
   }, [filas, categorias])
 
+  // RF-23. Exporta lo que se ve: el mes elegido con los filtros aplicados
+  function exportarCSV() {
+    const sufijo = hayFiltro ? '_filtrado' : ''
+    descargarCSV(transaccionesACSV(visibles), `webfinanzas_movimientos_${periodo}${sufijo}.csv`)
+  }
+
   const hayFiltro = filtros.texto || filtros.tipo !== 'todos' || filtros.categoriaId
 
   async function trasGuardar() {
@@ -90,6 +97,11 @@ export default function Transacciones({
         acciones={
           <>
             <SelectorMes periodo={periodo} onCambiar={onCambiarPeriodo} />
+            <button
+              className="boton auto fantasma" onClick={exportarCSV}
+              disabled={estado !== 'listo' || visibles.length === 0}
+              title="Descarga los movimientos que se ven en pantalla"
+            >Exportar CSV</button>
             <button className="boton auto" onClick={onNuevaTransaccion}>+ Nueva transacción</button>
           </>
         }

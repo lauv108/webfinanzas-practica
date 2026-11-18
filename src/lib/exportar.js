@@ -27,9 +27,8 @@ export async function exportarDatos(usuario) {
 }
 
 /* Entrega el archivo al navegador sin pasar por ningún servidor. */
-export function descargarJSON(objeto, nombre) {
-  const contenido = JSON.stringify(objeto, null, 2)
-  const blob = new Blob([contenido], { type: 'application/json;charset=utf-8' })
+function descargarArchivo(contenido, nombre, tipo) {
+  const blob = new Blob([contenido], { type: tipo })
   const url = URL.createObjectURL(blob)
   const enlace = document.createElement('a')
   enlace.href = url
@@ -38,4 +37,46 @@ export function descargarJSON(objeto, nombre) {
   enlace.click()
   enlace.remove()
   URL.revokeObjectURL(url)
+}
+
+export function descargarJSON(objeto, nombre) {
+  descargarArchivo(JSON.stringify(objeto, null, 2), nombre, 'application/json;charset=utf-8')
+}
+
+/*
+ * RF-23. Movimientos en CSV para abrir en una hoja de cálculo.
+ * - Separador punto y coma: es el que Excel espera con la configuración
+ *   regional de Colombia, donde la coma es el separador decimal.
+ * - Marca BOM al inicio para que Excel lea las tildes como UTF-8.
+ * - Los valores que empiezan por = + - @ se anteponen con un apóstrofo para
+ *   que la hoja no los ejecute como fórmula (inyección en CSV).
+ */
+const SEPARADOR = ';'
+
+function celda(valor) {
+  let texto = valor == null ? '' : String(valor)
+  if (/^[=+\-@\t\r]/.test(texto)) texto = `'${texto}`
+  if (/[";\n\r]/.test(texto)) texto = `"${texto.replace(/"/g, '""')}"`
+  return texto
+}
+
+function montoPlano(valor) {
+  const n = Number(valor)
+  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ',')
+}
+
+export function transaccionesACSV(filas) {
+  const encabezado = ['Fecha', 'Tipo', 'Categoría', 'Descripción', 'Monto']
+  const lineas = filas.map((f) => [
+    f.fecha,
+    f.tipo === 'ingreso' ? 'Ingreso' : 'Gasto',
+    f.categorias?.nombre ?? '',
+    f.descripcion,
+    montoPlano(f.monto),
+  ].map(celda).join(SEPARADOR))
+  return [encabezado.map(celda).join(SEPARADOR), ...lineas].join('\r\n')
+}
+
+export function descargarCSV(texto, nombre) {
+  descargarArchivo('﻿' + texto, nombre, 'text/csv;charset=utf-8')
 }

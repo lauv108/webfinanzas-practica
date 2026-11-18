@@ -73,6 +73,7 @@ publicada. Anotar el resultado y la fecha en cada fila.
 | RF-18 | Editar y luego borrar el tope | El movimiento no se toca |
 | RF-19 / RF-20 | Cambiar de mes en Resumen | Totales, gráfico y desglose cambian; mes futuro deshabilitado |
 | RF-21 / RF-22 | Resumen con gastos en varias categorías | Anillo y tabla coinciden en porcentajes |
+| RF-23 | Movimientos → Exportar CSV, con y sin filtros | Descarga `webfinanzas_movimientos_AAAA-MM.csv`; abre en la hoja de cálculo con tildes y una columna por campo, y trae solo las filas visibles |
 | RNF-13 | Perfil → Exportar mis datos | Descarga un JSON con cuenta, categorías, movimientos y topes |
 | RNF-12 | Perfil → Leer la política | Se muestra completa; también desde el registro |
 | RNF-09 | Entrar con una segunda cuenta | No ve nada de la primera |

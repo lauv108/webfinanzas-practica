@@ -37,7 +37,8 @@ sectores.
 - **Resumen** — balance del mes, ingresos y gastos, gráfico de distribución,
   desglose por categoría, últimos movimientos y estado de los topes.
 - **Movimientos** — historial del mes con buscador, filtro por tipo y fichas por
-  categoría, con edición y eliminación por fila.
+  categoría, con edición y eliminación por fila, y exportación a CSV de lo que
+  se ve en pantalla.
 - **Presupuesto** — topes mensuales por categoría con barra de consumo y
   semáforo: verde por debajo del 90 % del tope, amarillo entre 90 y 99, rojo al
   alcanzarlo.
@@ -116,15 +117,21 @@ Pasos, variables de entorno y lista de pruebas de aceptación en
 de entorno deben existir en el hosting **antes** del primer despliegue: sin
 ellas el sitio compila pero queda en blanco.
 
-## Fuera del alcance de la versión 1.0
+## Fuera del alcance
 
-Exportación a CSV, sincronización bancaria, notificaciones automáticas, metas de
-ahorro, reportes comparativos entre meses, multimoneda, aplicación móvil nativa y
-cuentas compartidas.
+Sincronización bancaria, notificaciones automáticas, metas de ahorro, reportes
+comparativos entre meses, multimoneda, aplicación móvil nativa y cuentas
+compartidas.
 
 ## Estado
 
-Los veintidós requerimientos funcionales y los de tratamiento de datos (RNF-12
-y RNF-13) están implementados. Quedan pendientes la configuración de seguridad
-de la autenticación en el panel, la publicación del sitio y las pruebas de
-aceptación sobre la URL publicada.
+Publicada en https://webfinanzas-co.vercel.app/. El producto mínimo viable se
+entregó el 8 de noviembre de 2026: los veintidós requerimientos funcionales y
+los de tratamiento de datos (RNF-12 y RNF-13) están implementados, la
+verificación de accesos sobre producción pasa diez de diez y los dieciséis casos
+de aceptación pasan sobre el sitio publicado.
+
+Después de la entrega se incorporó la exportación de movimientos a CSV (RF-23),
+que había quedado fuera de la versión 1.0. Quedan abiertos dos puntos de
+seguridad de nivel medio: documentar los límites de intentos de inicio de
+sesión de la plataforma (S05) y revisar sus registros de autenticación (S06).
