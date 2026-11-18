@@ -80,3 +80,41 @@ publicada. Anotar el resultado y la fecha en cada fila.
 | RNF-13 | Perfil → Eliminar mi cuenta, escribiendo el correo | Cierra sesión; no se puede volver a entrar |
 | RNF-05 | Abrir el sitio en un móvil o con el navegador a 360 px | Barra inferior; sin desplazamiento horizontal |
 | RNF-10 | Candado en la barra del navegador | HTTPS válido |
+
+## Revisión de seguridad posterior a la entrega (S05 y S06)
+
+Revisión hecha el 18 de noviembre de 2026 en el panel de Supabase. Se repite
+una vez al mes o después de cualquier cambio en la autenticación.
+
+### S05. Límites de intentos (Authentication → Rate Limits)
+
+| Límite | Valor | Lectura |
+|---|---|---|
+| Registros e inicios de sesión | 30 cada 5 minutos por IP (360 por hora) | Frena la prueba masiva de contraseñas contra una cuenta |
+| Verificación de enlaces y códigos | 30 cada 5 minutos por IP | Frena el abuso de los enlaces de confirmación y recuperación |
+| Renovación de sesión | 150 cada 5 minutos por IP | Holgado para el uso normal |
+| Envío de correos del proyecto | 2 por hora | Límite del servidor de correo gratuito; el más restrictivo |
+| Usuarios anónimos | 30 por hora por IP | La aplicación no usa inicio anónimo |
+
+Se dejan los valores por defecto. No se activa la prueba de desafío
+(Authentication → Attack Protection): con 30 intentos cada 5 minutos un ataque
+de fuerza bruta no es práctico contra contraseñas de ocho caracteres con letras
+y números, y el desafío añadiría fricción al usuario objetivo. Se reevalúa si
+los registros muestran intentos fallidos en serie.
+
+Riesgo conocido: el límite de dos correos por hora puede retrasar la
+confirmación o la recuperación si varias personas se registran a la vez. Se
+resuelve configurando un servidor de correo propio (Authentication → Emails →
+SMTP) si el uso crece.
+
+### S06. Registros de autenticación (Logs → Auth)
+
+Ventana revisada: última hora, 35 eventos. Cero errores. Un inicio de sesión
+correcto por renovación de sesión. Ningún intento fallido de inicio de sesión.
+Las cuatro advertencias son avisos de obsolescencia internos del servicio de
+autenticación de la plataforma, emitidos al reiniciarse por una actualización
+de versión; no dependen de la configuración del proyecto.
+
+Qué buscar en cada revisión: respuestas 400 o 429 repetidas en `/token` desde
+una misma dirección (prueba de contraseñas o límite alcanzado), registros en
+serie en `/signup` y cualquier evento de nivel error.

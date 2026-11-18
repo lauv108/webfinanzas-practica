@@ -132,6 +132,6 @@ verificación de accesos sobre producción pasa diez de diez y los dieciséis ca
 de aceptación pasan sobre el sitio publicado.
 
 Después de la entrega se incorporó la exportación de movimientos a CSV (RF-23),
-que había quedado fuera de la versión 1.0. Quedan abiertos dos puntos de
-seguridad de nivel medio: documentar los límites de intentos de inicio de
-sesión de la plataforma (S05) y revisar sus registros de autenticación (S06).
+que había quedado fuera de la versión 1.0. El 18 de noviembre se revisaron los
+límites de intentos (S05) y los registros de autenticación (S06) de la
+plataforma; el resultado está en `docs/despliegue-y-pruebas.md`.
