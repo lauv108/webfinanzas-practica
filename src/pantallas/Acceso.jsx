@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useSesion } from '../auth/SesionProvider'
 import { traducirError, validarCorreo, validarClave } from '../auth/mensajes'
 import PoliticaDatos from '../componentes/PoliticaDatos'
+import { LogoCompleto } from '../componentes/Logo'
+import { IconoLlave } from '../componentes/Iconos'
 
 /*
  * Pantallas de acceso: registro (RF-01), inicio de sesión (RF-02)
@@ -10,8 +12,8 @@ import PoliticaDatos from '../componentes/PoliticaDatos'
  */
 
 const TITULOS = {
-  login: { titulo: 'Iniciar sesión', sub: 'WebFinanzas: tu dinero, tu control.', boton: 'Entrar' },
-  registro: { titulo: 'Crear cuenta', sub: 'Tus datos quedan asociados solo a tu correo.', boton: 'Crear cuenta' },
+  login: { titulo: 'Iniciar sesión', sub: null, boton: 'Entrar' },
+  registro: { titulo: 'Crear cuenta', sub: null, boton: 'Crear cuenta' },
   recuperar: { titulo: 'Recuperar contraseña', sub: 'Te enviamos un enlace para definir una nueva.', boton: 'Enviar enlace' },
 }
 
@@ -97,11 +99,18 @@ export default function Acceso() {
 
   const texto = TITULOS[modo]
 
+  // Registro paso a paso: la pista aparece al empezar a escribir la contraseña
+  // y se va cuando ya cumple; la confirmación aparece cuando la contraseña es válida.
+  const claveValida = validarClave(clave) === null
+  const verPista = modo === 'registro' && clave.length > 0 && !claveValida && !errores.clave
+  const verConfirmacion = modo === 'registro' && (claveValida || confirmacion.length > 0)
+
   return (
     <main className="acceso">
       <form className="tarjeta" onSubmit={enviar} noValidate>
+        <LogoCompleto tono="claro" />
         <h1>{texto.titulo}</h1>
-        <p className="sub">{texto.sub}</p>
+        {texto.sub && <p className="sub">{texto.sub}</p>}
 
         <div className="campo">
           <label htmlFor="correo">Correo electrónico</label>
@@ -125,12 +134,12 @@ export default function Acceso() {
               value={clave}
               onChange={(e) => setClave(e.target.value)}
             />
-            {modo === 'registro' && !errores.clave && <p className="pista">Mínimo 8 caracteres, con letras y números.</p>}
+            {verPista && <p className="pista">Mínimo 8 caracteres, con letras y números.</p>}
             {errores.clave && <p className="error">{errores.clave}</p>}
           </div>
         )}
 
-        {modo === 'registro' && (
+        {verConfirmacion && (
           <div className="campo">
             <label htmlFor="confirmacion">Confirmar contraseña</label>
             <input
@@ -167,7 +176,7 @@ export default function Acceso() {
         <div className="enlaces">
           {modo === 'login' && (
             <>
-              <p><button type="button" className="enlace" onClick={() => cambiarModo('recuperar')}>Olvidé mi contraseña</button></p>
+              <p><button type="button" className="enlace con-icono" onClick={() => cambiarModo('recuperar')}><IconoLlave />Olvidé mi contraseña</button></p>
               <p>¿Primera vez? <button type="button" className="enlace" onClick={() => cambiarModo('registro')}>Crea tu cuenta</button></p>
             </>
           )}

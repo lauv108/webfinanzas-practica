@@ -34,3 +34,10 @@ export const IconoMarca = () => (
     <rect x="17" y="3" width="4" height="18" rx="1" />
   </svg>
 )
+
+/* Llave pequeña para el enlace "Olvidé mi contraseña" */
+export const IconoLlave = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="8" cy="15" r="4" /><path d="M11 12l9-9" /><path d="M17 6l3 3" /><path d="M15 8l2 2" />
+  </svg>
+)

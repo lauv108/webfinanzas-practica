@@ -1,7 +1,8 @@
 import { useSesion } from '../auth/SesionProvider'
 import {
-  IconoMarca, IconoResumen, IconoTransacciones, IconoPresupuesto, IconoPerfil, IconoSalir,
+  IconoResumen, IconoTransacciones, IconoPresupuesto, IconoPerfil, IconoSalir,
 } from './Iconos'
+import { LogoIcono } from './Logo'
 
 /*
  * Navegación principal.
@@ -22,7 +23,7 @@ export default function Navegacion({ activa, onCambiar }) {
 
   return (
     <nav className="riel" aria-label="Secciones">
-      <span className="riel-marca" title="WebFinanzas"><IconoMarca /></span>
+      <span className="riel-marca" title="WebFinanzas"><LogoIcono tamano={36} /></span>
 
       <ul className="riel-lista">
         {SECCIONES.map(({ clave, texto, Icono }) => (
