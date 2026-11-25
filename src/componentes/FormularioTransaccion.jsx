@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useSesion } from '../auth/SesionProvider'
 import { hoyISO } from '../lib/formato'
+import { TrendingDown, TrendingUp, Plus } from 'lucide-react'
+import IconoCategoria from './IconoCategoria'
 
 /*
  * Formulario de registro y edición de transacciones.
@@ -147,21 +149,15 @@ export default function FormularioTransaccion({ transaccion, categorias, onCerra
     <div className="velo" role="dialog" aria-modal="true" aria-label={transaccion ? 'Editar transacción' : 'Nueva transacción'}>
       <form className="modal" onSubmit={enviar} noValidate>
         <h2>{transaccion ? 'Editar transacción' : 'Nueva transacción'}</h2>
-        <p className="sub">Cinco campos, una sola pantalla.</p>
+        <p className="sub">Toma menos de un minuto.</p>
 
         <div className="campo">
-          <label>Tipo</label>
-          <div className="par">
-            <button
-              type="button"
-              className={datos.tipo === 'gasto' ? 'boton' : 'boton fantasma'}
-              onClick={() => cambiar('tipo', 'gasto')}
-            >Gasto</button>
-            <button
-              type="button"
-              className={datos.tipo === 'ingreso' ? 'boton' : 'boton fantasma'}
-              onClick={() => cambiar('tipo', 'ingreso')}
-            >Ingreso</button>
+          <span className="etiqueta-campo">Tipo</span>
+          <div className="tipo-selector" role="group" aria-label="Tipo de movimiento">
+            <button type="button" className="tipo-boton gasto" aria-pressed={datos.tipo === 'gasto'}
+              onClick={() => cambiar('tipo', 'gasto')}><TrendingDown size={17} /> Gasto</button>
+            <button type="button" className="tipo-boton ingreso" aria-pressed={datos.tipo === 'ingreso'}
+              onClick={() => cambiar('tipo', 'ingreso')}><TrendingUp size={17} /> Ingreso</button>
           </div>
         </div>
 
@@ -187,19 +183,25 @@ export default function FormularioTransaccion({ transaccion, categorias, onCerra
         </div>
 
         <div className="campo">
-          <label htmlFor="categoria">Categoría</label>
-          <select
-            id="categoria"
-            value={datos.categoriaId}
-            onChange={(e) => cambiar('categoriaId', e.target.value)}
-          >
-            <option value="">Elige una categoría</option>
-            {deEsteTipo.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            <option value={NUEVA}>+ Crear categoría nueva</option>
-          </select>
+          <span className="etiqueta-campo" id="categoria-rotulo">Categoría</span>
+          <div className="categorias-elegir" role="radiogroup" aria-labelledby="categoria-rotulo">
+            {deEsteTipo.map((c) => (
+              <button type="button" key={c.id} role="radio" aria-checked={datos.categoriaId === c.id}
+                className="categoria-opcion" onClick={() => cambiar('categoriaId', c.id)}>
+                <IconoCategoria nombre={c.nombre} tamano={30} />
+                <span>{c.nombre}</span>
+              </button>
+            ))}
+            <button type="button" role="radio" aria-checked={datos.categoriaId === NUEVA}
+              className="categoria-opcion nueva" onClick={() => cambiar('categoriaId', NUEVA)}>
+              <span className="icono-categoria nueva-icono" style={{ width: 30, height: 30 }}><Plus size={15} /></span>
+              <span>Nueva</span>
+            </button>
+          </div>
           {datos.categoriaId === NUEVA && (
             <input
               className="separado"
+              aria-label="Nombre de la categoría nueva"
               placeholder="Nombre de la categoría nueva"
               value={datos.nombreNuevaCategoria}
               onChange={(e) => cambiar('nombreNuevaCategoria', e.target.value)}

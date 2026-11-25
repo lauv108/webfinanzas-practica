@@ -43,8 +43,13 @@ export function SesionProvider({ children }) {
     usuario: sesion ? sesion.user : null,
 
     // RF-01. El disparador de la base de datos siembra las categorias iniciales.
-    registrar: (correo, clave) =>
-      supabase.auth.signUp({ email: correo, password: clave }),
+    // El nombre se guarda en los metadatos de la cuenta, no en una tabla
+    registrar: (correo, clave, nombre) =>
+      supabase.auth.signUp({
+        email: correo,
+        password: clave,
+        options: nombre ? { data: { nombre } } : undefined,
+      }),
 
     // RF-02
     iniciar: (correo, clave) =>
@@ -58,6 +63,14 @@ export function SesionProvider({ children }) {
 
     // RF-03
     cerrar: () => supabase.auth.signOut(),
+
+    // Nombre y meta de ahorro: metadatos de la cuenta en el servicio de
+    // autenticación. Al guardar, la sesión llega actualizada por onAuthStateChange.
+    actualizarPerfil: async (datos) => {
+      const { data, error } = await supabase.auth.updateUser({ data: datos })
+      if (!error && data?.user) setSesion((s) => (s ? { ...s, user: data.user } : s))
+      return { error }
+    },
   }
 
   return <SesionContexto.Provider value={valor}>{children}</SesionContexto.Provider>

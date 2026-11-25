@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useSesion } from '../auth/SesionProvider'
 import { traducirError, validarCorreo, validarClave } from '../auth/mensajes'
+import { validarNombre } from '../lib/perfil'
 import PoliticaDatos from '../componentes/PoliticaDatos'
 import { LogoCompleto } from '../componentes/Logo'
 import { IconoLlave } from '../componentes/Iconos'
+import { ChartPie, ShieldCheck, Sparkles } from 'lucide-react'
 
 /*
  * Pantallas de acceso: registro (RF-01), inicio de sesión (RF-02)
@@ -21,6 +23,7 @@ export default function Acceso() {
   const { registrar, iniciar, recuperar } = useSesion()
 
   const [modo, setModo] = useState('login')
+  const [nombre, setNombre] = useState('')
   const [correo, setCorreo] = useState('')
   const [clave, setClave] = useState('')
   const [confirmacion, setConfirmacion] = useState('')
@@ -44,6 +47,10 @@ export default function Acceso() {
 
     // Validación en el cliente antes de llamar al servicio
     const nuevos = {}
+    if (modo === 'registro') {
+      const errorNombre = validarNombre(nombre)
+      if (errorNombre) nuevos.nombre = errorNombre
+    }
     const errorCorreo = validarCorreo(correo)
     if (errorCorreo) nuevos.correo = errorCorreo
 
@@ -70,7 +77,7 @@ export default function Acceso() {
     setEnviando(true)
     try {
       if (modo === 'registro') {
-        const { data, error } = await registrar(correo.trim(), clave)
+        const { data, error } = await registrar(correo.trim(), clave, nombre.trim())
         if (error) {
           setErrores({ general: traducirError(error) })
         } else if (!data.session) {
@@ -107,10 +114,39 @@ export default function Acceso() {
 
   return (
     <main className="acceso">
-      <form className="tarjeta" onSubmit={enviar} noValidate>
-        <LogoCompleto tono="claro" />
+      <aside className="acceso-panel" aria-hidden="true">
+        <LogoCompleto tono="oscuro" />
+        <div className="acceso-panel-centro">
+          <IlustracionPanel />
+          <p className="acceso-lema">Tu dinero, tu control.</p>
+          <p className="acceso-panel-texto">Registra lo que entra y lo que sale, ponle topes a tus gastos y entiende tu mes de un vistazo.</p>
+          <ul className="acceso-beneficios">
+            <li><ChartPie size={18} /> Resumen visual de tu mes</li>
+            <li><Sparkles size={18} /> Un movimiento en segundos, sin vincular tu banco</li>
+            <li><ShieldCheck size={18} /> Tus datos solo los ves tú</li>
+          </ul>
+        </div>
+      </aside>
+
+      <div className="acceso-lado">
+      <form className="tarjeta acceso-tarjeta" onSubmit={enviar} noValidate>
+        <div className="acceso-logo-movil"><LogoCompleto tono="claro" /></div>
         <h1>{texto.titulo}</h1>
         {texto.sub && <p className="sub">{texto.sub}</p>}
+
+        {modo === 'registro' && (
+          <div className="campo">
+            <label htmlFor="nombre">¿Cómo te llamas?</label>
+            <input
+              id="nombre"
+              autoComplete="given-name"
+              maxLength={40}
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+            />
+            {errores.nombre && <p className="error">{errores.nombre}</p>}
+          </div>
+        )}
 
         <div className="campo">
           <label htmlFor="correo">Correo electrónico</label>
@@ -188,6 +224,7 @@ export default function Acceso() {
           )}
         </div>
       </form>
+      </div>
 
       {verPolitica && (
         <div className="velo" role="dialog" aria-modal="true" aria-label="Política de tratamiento de datos">
@@ -203,3 +240,28 @@ export default function Acceso() {
     </main>
   )
 }
+
+/* Ilustración decorativa del panel: una tarjeta de resumen con barras y un anillo */
+function IlustracionPanel() {
+  return (
+    <svg className="acceso-ilustracion" viewBox="0 0 320 190" role="presentation">
+      <rect x="0" y="0" width="320" height="190" rx="22" fill="rgb(255 255 255 / 0.08)" stroke="rgb(255 255 255 / 0.16)" />
+      <rect x="22" y="22" width="92" height="10" rx="5" fill="rgb(255 255 255 / 0.35)" />
+      <rect x="22" y="40" width="140" height="18" rx="6" fill="#ffffff" />
+      <g>
+        {[
+          [26, 70, '#4f9e78'], [52, 52, '#d4785c'], [78, 88, '#4f9e78'], [104, 60, '#d4785c'],
+          [130, 100, '#4f9e78'], [156, 48, '#d4785c'], [182, 110, '#4f9e78'], [208, 66, '#d4785c'],
+        ].map(([x, h, c], i) => (
+          <rect key={i} x={x} y={172 - h} width="18" height={h} rx="5" fill={c} opacity="0.9" />
+        ))}
+      </g>
+      <circle cx="270" cy="62" r="30" fill="none" stroke="rgb(255 255 255 / 0.16)" strokeWidth="12" />
+      <circle cx="270" cy="62" r="30" fill="none" stroke="#d9a33a" strokeWidth="12" strokeDasharray="120 189" transform="rotate(-90 270 62)" strokeLinecap="round" />
+      <circle cx="270" cy="62" r="30" fill="none" stroke="#8fb3e0" strokeWidth="12" strokeDasharray="40 189" strokeDashoffset="-126" transform="rotate(-90 270 62)" strokeLinecap="round" />
+      <rect x="244" y="118" width="54" height="8" rx="4" fill="rgb(255 255 255 / 0.3)" />
+      <rect x="244" y="134" width="40" height="8" rx="4" fill="rgb(255 255 255 / 0.2)" />
+    </svg>
+  )
+}
+

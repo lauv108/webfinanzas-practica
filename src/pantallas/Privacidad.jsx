@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import PoliticaDatos from '../componentes/PoliticaDatos'
 
@@ -5,16 +6,16 @@ import PoliticaDatos from '../componentes/PoliticaDatos'
 
 export default function Privacidad({ onVolver }) {
   return (
-    <>
+    <div className="pantalla">
       <EncabezadoPagina
         rotulo="Privacidad"
         titulo="Tratamiento de datos personales"
         resumen="Qué datos guarda WebFinanzas, para qué, quién los ve y cómo ejerces tus derechos."
-        acciones={<button className="boton fantasma auto" onClick={onVolver}>Volver al perfil</button>}
+        acciones={<button className="boton fantasma auto con-icono" onClick={onVolver}><ArrowLeft size={17} /> Volver al perfil</button>}
       />
-      <section className="tarjeta ancha">
+      <section className="tarjeta-t politica-t">
         <PoliticaDatos />
       </section>
-    </>
+    </div>
   )
 }

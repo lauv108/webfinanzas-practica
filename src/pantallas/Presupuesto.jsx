@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Plus, Pencil, Trash2, Target } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { pesos, rangoDelPeriodo, nombrePeriodo } from '../lib/formato'
 import EncabezadoPagina from '../componentes/EncabezadoPagina'
 import SelectorMes from '../componentes/SelectorMes'
 import FormularioPresupuesto from '../componentes/FormularioPresupuesto'
+import IconoCategoria from '../componentes/IconoCategoria'
+import CifraAnimada from '../componentes/CifraAnimada'
+import Esqueleto from '../componentes/Esqueleto'
+import MetaAhorro from '../componentes/MetaAhorro'
+import { estiloCategoria } from '../lib/categorias'
 
 /*
  * Presupuesto mensual.
@@ -11,17 +18,26 @@ import FormularioPresupuesto from '../componentes/FormularioPresupuesto'
  * alerta, RF-18 edición y eliminación.
  *
  * Ni el acumulado ni el semáforo se calculan aquí: los resuelve la vista
- * v_estado_presupuesto, de modo que la regla del 90 % vive en un solo lugar.
+ * v_estado_presupuesto. La interfaz solo elige el color de la barra.
  */
 
-const SEMAFORO = {
-  seguro: { texto: 'Seguro', clase: 'bien' },
-  alerta: { texto: 'Alerta', clase: 'ojo' },
-  excedido: { texto: 'Excedido', clase: 'mal' },
+/* Color del progreso: verde normal, ocre desde 80 %, terracota al pasarse.
+   La vista sigue marcando su estado con la regla del 90 %; esto es solo visual. */
+function tonoTope(pct) {
+  if (pct > 100) return 'excedido'
+  if (pct >= 80) return 'alerta'
+  return 'bien'
+}
+
+const MENSAJE = {
+  bien: { texto: 'Vas bien' },
+  alerta: { texto: 'Cerca del tope' },
+  excedido: { texto: 'Te pasaste' },
 }
 
 export default function Presupuesto({ periodo, onCambiarPeriodo, recarga, categorias }) {
   const [topes, setTopes] = useState([])
+  const [mes, setMes] = useState({ ingresos: 0, gastos: 0 })
   const [estado, setEstado] = useState('cargando')
   const [modal, setModal] = useState(null)
   const [borrando, setBorrando] = useState(false)
@@ -31,16 +47,23 @@ export default function Presupuesto({ periodo, onCambiarPeriodo, recarga, catego
     setEstado('cargando')
     const { desde } = rangoDelPeriodo(periodo)
 
-    const { data, error } = await supabase
-      .from('v_estado_presupuesto')
-      .select('presupuesto_id, categoria_id, categoria, monto_tope, gasto_acumulado, disponible, porcentaje_consumido, estado')
-      .eq('periodo', desde)
-      .order('porcentaje_consumido', { ascending: false })
+    const [{ data, error }, resumen] = await Promise.all([
+      supabase
+        .from('v_estado_presupuesto')
+        .select('presupuesto_id, categoria_id, categoria, monto_tope, gasto_acumulado, disponible, porcentaje_consumido, estado')
+        .eq('periodo', desde)
+        .order('porcentaje_consumido', { ascending: false }),
+      supabase.from('v_resumen_mensual')
+        .select('total_ingresos, total_gastos')
+        .eq('periodo', desde).maybeSingle(),
+    ])
 
     if (error) {
       console.error('[presupuesto]', error)
       setEstado('error')
     } else {
+      if (resumen.error) console.error('[presupuesto] resumen', resumen.error)
+      setMes({ ingresos: Number(resumen.data?.total_ingresos) || 0, gastos: Number(resumen.data?.total_gastos) || 0 })
       setTopes(data)
       setEstado('listo')
     }
@@ -53,7 +76,7 @@ export default function Presupuesto({ periodo, onCambiarPeriodo, recarga, catego
 
   const totalTope = topes.reduce((s, t) => s + Number(t.monto_tope), 0)
   const totalGasto = topes.reduce((s, t) => s + Number(t.gasto_acumulado), 0)
-  const excedidos = topes.filter((t) => t.estado === 'excedido').length
+  const excedidos = topes.filter((t) => tonoTope(Number(t.porcentaje_consumido)) === 'excedido').length
   const avance = totalTope > 0 ? Math.min((totalGasto / totalTope) * 100, 100) : 0
 
   async function eliminar(tope) {
@@ -71,26 +94,25 @@ export default function Presupuesto({ periodo, onCambiarPeriodo, recarga, catego
     cargar()
   }
 
+  const enAlerta = topes.filter((t) => tonoTope(Number(t.porcentaje_consumido)) === 'alerta').length
+  const tonoTotal = tonoTope(totalTope > 0 ? (totalGasto / totalTope) * 100 : 0)
+
   return (
-    <>
+    <div className="pantalla">
       <EncabezadoPagina
-        rotulo={`Presupuesto — ${nombrePeriodo(periodo)}`}
+        rotulo={`Presupuesto · ${nombrePeriodo(periodo)}`}
         titulo="Presupuesto"
-        resumen={
-          estado === 'listo' && topes.length > 0
-            ? `${topes.length} topes definidos${excedidos > 0 ? ` · ${excedidos} excedido${excedidos > 1 ? 's' : ''}` : ''}`
-            : null
-        }
+        resumen="Ponle un tope mensual a cada categoría y te avisamos cuando te acerques."
         acciones={
           <>
             <SelectorMes periodo={periodo} onCambiar={onCambiarPeriodo} />
             <button
-              className="boton auto"
+              className="boton auto con-icono"
               onClick={() => setModal({ clase: 'nuevo' })}
               disabled={disponibles.length === 0}
               title={disponibles.length === 0 ? 'Todas tus categorías de gasto ya tienen tope este mes' : undefined}
             >
-              + Definir tope
+              <Plus size={18} strokeWidth={2.2} /> Definir tope
             </button>
           </>
         }
@@ -99,83 +121,111 @@ export default function Presupuesto({ periodo, onCambiarPeriodo, recarga, catego
       {errorGeneral && <p className="error bloque">{errorGeneral}</p>}
       {estado === 'error' && <p className="error bloque">No se pudo cargar el presupuesto. Recarga la página.</p>}
 
-      {estado === 'listo' && topes.length > 0 && (
-        <section className="bloque-hero">
-          <p className="dato-rotulo">Gastado del total presupuestado</p>
-          <p className="cifra-hero">
-            {pesos(totalGasto)} <span className="cifra-hero-tenue">de {pesos(totalTope)}</span>
-          </p>
-          <span className="medidor ancho"><i style={{ width: `${avance}%` }} /></span>
-          <p className="dato-pie">
-            {avance.toFixed(0)} % de los topes del mes
-            {excedidos > 0 && ` · ${excedidos} categoría${excedidos > 1 ? 's' : ''} por encima del tope`}
-          </p>
-        </section>
+      {estado === 'cargando' && (
+        <>
+          <Esqueleto alto={150} redondeo={18} />
+          <div className="topes-rejilla">
+            {[0, 1, 2].map((k) => <Esqueleto key={k} alto={170} redondeo={18} />)}
+          </div>
+        </>
       )}
 
-      {estado === 'cargando' && <p className="pista">Calculando tus topes...</p>}
+      {estado === 'listo' && topes.length > 0 && (
+        <motion.section className="tarjeta-t resumen-topes" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="resumen-topes-cifras">
+            <div>
+              <p className="kpi-rotulo">Gastado del total presupuestado</p>
+              <p className="resumen-topes-monto">
+                <CifraAnimada valor={totalGasto} formato={pesos} /> <span>de {pesos(totalTope)}</span>
+              </p>
+            </div>
+            <div className="resumen-topes-pildoras">
+              <span className="pildora">{topes.length} {topes.length === 1 ? 'tope' : 'topes'}</span>
+              {enAlerta > 0 && <span className="pildora alerta">{enAlerta} cerca del límite</span>}
+              {excedidos > 0 && <span className="pildora excedido">{excedidos} {excedidos === 1 ? 'excedido' : 'excedidos'}</span>}
+            </div>
+          </div>
+          <div className="barra-progreso grande">
+            <motion.i className={tonoTotal} initial={{ width: 0 }} animate={{ width: `${avance}%` }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }} />
+          </div>
+          <p className="resumen-topes-pie">Llevas el {avance.toFixed(0)} % de lo que planeaste gastar este mes.</p>
+        </motion.section>
+      )}
+
+      {estado === 'listo' && <MetaAhorro ingresos={mes.ingresos} gastos={mes.gastos} />}
 
       {estado === 'listo' && topes.length === 0 && (
-        <section className="tarjeta ancha">
-          <div className="vacio">
-            <p className="fuerte">Todavía no has definido topes para este mes.</p>
-            <p>Asigna un límite a una categoría y te avisamos cuando te acerques.</p>
-            <button
-              className="boton auto"
-              onClick={() => setModal({ clase: 'nuevo' })}
-              disabled={disponibles.length === 0}
-            >
-              Definir mi primer tope
-            </button>
-          </div>
+        <section className="tarjeta-t vacio-t">
+          <span className="vacio-icono"><Target size={30} strokeWidth={1.6} /></span>
+          <h2>Todavía no tienes topes este mes</h2>
+          <p>Ponle un límite a la categoría donde más gastas y aquí verás cuánto te queda.</p>
+          <button
+            className="boton auto con-icono"
+            onClick={() => setModal({ clase: 'nuevo' })}
+            disabled={disponibles.length === 0}
+          >
+            <Plus size={18} strokeWidth={2.2} /> Definir mi primer tope
+          </button>
         </section>
       )}
 
       {estado === 'listo' && topes.length > 0 && (
-        <div className="rejilla-dos">
-          {topes.map((t) => {
-            const s = SEMAFORO[t.estado] ?? SEMAFORO.seguro
-            const ancho = Math.min(Number(t.porcentaje_consumido), 100)
-            const excedido = t.estado === 'excedido'
+        <div className="topes-rejilla">
+          {topes.map((t, i) => {
+            const pct = Number(t.porcentaje_consumido)
+            const tono = tonoTope(pct)
+            const { texto } = MENSAJE[tono]
             return (
-              <section className="tarjeta tope" key={t.presupuesto_id}>
-                <div className="tarjeta-encabezado">
-                  <h2>{t.categoria}</h2>
-                  <span className="tope-cifras">
-                    <span className={excedido ? 'cifra sale' : 'cifra'}>{pesos(t.gasto_acumulado)}</span>
-                    <span className="tope-de"> de {pesos(t.monto_tope)}</span>
+              <motion.section className="tarjeta-t tope-t" key={t.presupuesto_id}
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                <div className="tope-t-cabeza">
+                  <IconoCategoria nombre={t.categoria} tamano={42} />
+                  <div className="tope-t-titulo">
+                    <h2>{t.categoria}</h2>
+                    <span className={`pildora ${tono}`}>{texto}</span>
+                  </div>
+                  <span className="acciones-fila visibles">
+                    <button className="boton-icono" onClick={() => setModal({ clase: 'editar', tope: t })} aria-label={`Editar el tope de ${t.categoria}`} title="Editar"><Pencil size={16} /></button>
+                    <button className="boton-icono peligro" onClick={() => setModal({ clase: 'borrar', tope: t })} aria-label={`Borrar el tope de ${t.categoria}`} title="Borrar"><Trash2 size={16} /></button>
                   </span>
                 </div>
 
-                <span className={'medidor ancho ' + s.clase}>
-                  <i style={{ width: `${ancho}%` }} />
-                </span>
+                <p className="tope-t-monto">{pesos(t.gasto_acumulado)} <span>de {pesos(t.monto_tope)}</span></p>
 
-                <div className="tope-pie">
-                  <span className={'semaforo ' + s.clase}>
-                    {s.texto} · {Number(t.porcentaje_consumido).toFixed(0)} %
-                  </span>
-                  <span className="tope-nota">
-                    {excedido
+                <div className="barra-progreso">
+                  <motion.i className={tono} initial={{ width: 0 }} animate={{ width: `${Math.min(pct, 100)}%` }}
+                    transition={{ duration: 0.9, delay: 0.1 + i * 0.05, ease: [0.16, 1, 0.3, 1] }} />
+                </div>
+
+                <div className="tope-t-pie">
+                  <span className={`tope-pct ${tono}`}>{pct.toFixed(0)} %</span>
+                  <span>
+                    {pct > 100
                       ? `${pesos(Number(t.gasto_acumulado) - Number(t.monto_tope))} por encima`
-                      : `${pesos(t.disponible)} disponibles`}
-                  </span>
-                  <span className="mov-acciones">
-                    <button className="mini" onClick={() => setModal({ clase: 'editar', tope: t })}>editar</button>
-                    <button className="mini borrar" onClick={() => setModal({ clase: 'borrar', tope: t })}>borrar</button>
+                      : `Te quedan ${pesos(t.disponible)}`}
                   </span>
                 </div>
-              </section>
+              </motion.section>
             )
           })}
         </div>
       )}
 
-      {estado === 'listo' && topes.length > 0 && (
-        <p className="nota">
-          El acumulado se recalcula al guardar, editar o eliminar una transacción de la categoría.
-          El semáforo lo devuelve la vista de la base de datos, no la interfaz.
-        </p>
+      {estado === 'listo' && topes.length > 0 && disponibles.length > 0 && (
+        <section className="tarjeta-t sin-tope">
+          <div>
+            <h2>Categorías sin tope</h2>
+            <p className="tarjeta-t-sub">Puedes ponerles un límite cuando quieras.</p>
+          </div>
+          <div className="fichas">
+            {disponibles.map((c) => (
+              <button key={c.id} className="ficha" onClick={() => setModal({ clase: 'nuevo' })}>
+                <i style={{ background: estiloCategoria(c.nombre).color }} />{c.nombre}
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
       {modal?.clase === 'nuevo' && (
@@ -215,6 +265,6 @@ export default function Presupuesto({ periodo, onCambiarPeriodo, recarga, catego
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }

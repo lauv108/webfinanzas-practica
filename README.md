@@ -34,21 +34,23 @@ sectores.
 
 ## Secciones
 
-- **Resumen** — balance del mes, ingresos y gastos, gráfico de distribución,
-  desglose por categoría, últimos movimientos y estado de los topes.
-- **Movimientos** — historial del mes con buscador, filtro por tipo y fichas por
-  categoría, con edición y eliminación por fila, y exportación a CSV de lo que
+- **Resumen** — saludo por nombre, saldo total, ingresos, gastos y ahorro del
+  mes frente al anterior, ingresos y gastos de los últimos 6 meses, gasto por
+  categoría, topes, últimos movimientos, meta de ahorro y consejo del día.
+- **Análisis** — ingresos, gastos y ahorro mes a mes (6 o 12 meses) y gasto por
+  categoría comparado con el mes anterior.
+- **Movimientos** — historial del mes agrupado por día, con buscador, filtro por
+  tipo, rango de fechas y fichas por categoría, con edición y eliminación por fila, y exportación a CSV de lo que
   se ve en pantalla.
-- **Presupuesto** — topes mensuales por categoría con barra de consumo y
-  semáforo: verde por debajo del 90 % del tope, amarillo entre 90 y 99, rojo al
-  alcanzarlo.
-- **Perfil** — datos de la cuenta, cambio de contraseña, exportación de todos
+- **Presupuesto** — topes mensuales por categoría con barra de consumo: verde
+  por debajo del 80 % del tope, ocre desde el 80 % y terracota al pasarse.
+- **Perfil** — nombre y meta de ahorro (en los metadatos de la cuenta), cambio de contraseña, exportación de todos
   los datos en JSON, eliminación de la cuenta y cierre de sesión.
 - **Privacidad** — política de tratamiento de datos personales (Ley 1581 de
   2012), visible también antes de registrarse. El registro exige aceptarla.
 
-La navegación es un riel vertical de iconos en escritorio y una barra inferior
-por debajo de 768 px. La interfaz es operable desde 360 px de ancho.
+La navegación es una barra lateral que se puede colapsar en escritorio y una
+barra inferior por debajo de 768 px. La interfaz es operable desde 360 px de ancho.
 
 ## Puesta en marcha
 
@@ -119,9 +121,8 @@ ellas el sitio compila pero queda en blanco.
 
 ## Fuera del alcance
 
-Sincronización bancaria, notificaciones automáticas, metas de ahorro, reportes
-comparativos entre meses, multimoneda, aplicación móvil nativa y cuentas
-compartidas.
+Sincronización bancaria, notificaciones automáticas, multimoneda, aplicación
+móvil nativa y cuentas compartidas.
 
 ## Estado
 
